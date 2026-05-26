@@ -1,0 +1,95 @@
+ <!DOCTYPE html>
+<html>
+<head>
+    <title>Secure Color Trading</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #f4f4f4; margin: 0; padding: 20px; }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
+        .wallet-box { background: #2c3e50; color: white; padding: 15px; border-radius: 8px; font-size: 20px; margin-bottom: 15px; font-weight: bold; }
+        .bet-box { margin: 15px 0; display: flex; justify-content: center; gap: 10px; align-items: center; }
+        .bet-box input { width: 80px; padding: 8px; font-size: 16px; border-radius: 5px; border: 1px solid #ccc; text-align: center; }
+        .btn-box { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
+        button { padding: 15px 20px; border: none; border-radius: 5px; color: white; font-weight: bold; cursor: pointer; font-size: 14px; }
+        .green { background: #2ecc71; }
+        .violet { background: #9b59b6; }
+        .red { background: #ff4d4d; }
+        #result-text { font-size: 18px; font-weight: bold; color: #555; margin-top: 20px; padding: 10px; border-radius: 5px; background: #eee; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>Color Trading (Secure Mode)</h2>
+        
+        <div class="wallet-box">Wallet: ₹<span id="balance-amount">Loading...</span></div>
+        
+        <div class="bet-box">
+            <label>Bet (₹): </label>
+            <input type="number" id="bet-input" value="100">
+        </div>
+
+        <div class="btn-box">
+            <button class="green" onclick="placeServerBet('Green')">GREEN</button>
+            <button class="violet" onclick="placeServerBet('Violet')">VIOLET</button>
+            <button class="red" onclick="placeServerBet('Red')">RED</button>
+        </div>
+
+        <p id="result-text">Make a prediction. Math runs on Termux!</p>
+    </div>
+
+    <script>
+        // Fetch balance as soon as the page opens
+        fetchBalance();
+
+        function fetchBalance() {
+            fetch(https://color-trading-backend-irsx.onrender.com)
+                .then(res => res.json())
+                .then(data => { document.getElementById('balance-amount').innerText = data.balance; });
+        }
+
+        function placeServerBet(selectedColor) {
+            const betValue = parseInt(document.getElementById('bet-input').value);
+            const resultDisplay = document.getElementById('result-text');
+
+            if(isNaN(betValue) || betValue <= 0) {
+                alert("Enter a valid bet amount");
+                return;
+            }
+
+            resultDisplay.innerText = "Sending bet to server...";
+
+            // Sending data packet to our backend using POST method
+            fetch('http://localhost:3000/place-bet', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userChoice: selectedColor, betAmount: betValue })
+            })
+            .then(res => {
+                if(!res.ok) {
+                    return res.json().then(err => { throw new Error(err.error) });
+                }
+                return res.json();
+            })
+            .then(data => {
+                // Display secure result received from backend server
+                if(data.status === "WIN") {
+                    resultDisplay.innerHTML = `Result: ${data.winningColor}<br>🎉 YOU WIN!`;
+                    resultDisplay.style.background = "#d4edda";
+                } else {
+                    resultDisplay.innerHTML = `Result: ${data.winningColor}<br>❌ YOU LOSE!`;
+                    resultDisplay.style.background = "#f8d7da";
+                }
+                // Update live balance display
+                document.getElementById('balance-amount').innerText = data.newBalance;
+            })
+            .catch(err => {
+                alert(err.message);
+                resultDisplay.innerText = "Error encountered.";
+                resultDisplay.style.background = "#eee";
+            });
+        }
+    https://color-trading-backend-irsx.onrender.com
+
+</body>
+</html>
